@@ -1,0 +1,77 @@
+
+Domain:
+D(studentIdnr, studentName, login, branchName, programName, programAbbreviation, 
+ courseCode, courseName, credits, departmentName, departmentAbbreviation, capacity, 
+ classification, grade, position)
+
+-- a) Functional dependencies --
+
+1.studentIdnr → studentName, login
+2.login → studentIdnr, studentName
+3.programName → programAbbreviation
+4.departmentAbbreviation → departmentName
+5.courseCode → courseName, credits, departmentName
+6.courseCode, classification → {} 
+7.studentIdnr, courseCode → grade
+8.courseCode, position → studentIdnr (in waiting list)
+9.studentIdnr, branchName → programName
+10.programName, branchName → {}
+11.studentIdnr → programName
+12.courseCode → capacity (for limited courses)
+13.departmentName → departmentAbbreviation
+14.studentIdnr, courseCode → position (in waiting list)
+15.courseCode, studentIdnr → grade(in taken courses)
+
+-- b) BCNF schema --
+
+BasicStudentInfo(_studentIdnr_, name, login)
+
+StudentPrograms(_studentIdnr_, _programName_)
+    studentIdnr → BasicStudentInfo.studentIdnr
+    programName → Programs.name
+
+Programs(_name_, abbreviation)
+
+Departments(_name_, abbreviation)
+
+Courses(_code_, name, credits, department)
+    department → Departments.name
+
+Classifications(_name_)
+
+CourseClassifications(_course_, _classification_)
+    course → Courses.code
+    classification → Classifications.name
+
+LimitedCourses(_code_, capacity)
+    code → Courses.code
+
+Grades(_studentIdnr_, _courseCode_, grade)
+    studentIdnr → BasicStudentInfo.studentIdnr
+    courseCode → Courses.code
+
+WaitingList(_courseCode_, _position_, studentIdnr)
+    courseCode → LimitedCourses.code
+    studentIdnr → BasicStudentInfo.studentIdnr
+
+Branches(_name_, _program_)
+    program → Programs.name
+
+StudentBranches(_studentIdnr_, branchName, programName)
+    studentIdnr → BasicStudentInfo.studentIdnr
+    (branchName, programName) → Branches.(name, program)
+
+    
+-- c) 4NF additions --
+
+MVD identified: courseCode ->> classification
+
+# Relations removed:
+CourseClassifications(_course_, _classification_)
+
+# Relations added:
+Classifications(_name_)
+CourseClassification(_courseCode_, _classification_)
+    courseCode → Courses.code
+    classification → Classifications.name
+
