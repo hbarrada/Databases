@@ -4,6 +4,21 @@ D(studentIdnr, studentName, login, branchName, programName, programAbbreviation,
  courseCode, courseName, credits, departmentName, departmentAbbreviation, capacity, 
  classification, grade, position)
 
+***************************************************************************************
+1. studentIdnr → studentName, login, programName
+2. login → studentIdnr
+3. programName → programAbbreviation, departmentName, departmentAbbreviation
+4. courseCode → courseName, credits, departmentName, capacity
+5. programName → departmentName
+6. departmentNAme → departmentAbbreviation
+7. (studentIdnr, courseCode) → grade
+8. (studentIdnr, courseCode) → position
+9. (courseCode, position) → studentIdnr
+10. studentIdnr → branchName???
+11. (studentIdnr, courseCode) → grade, position
+12. courseCode → classification
+
+***************************************************************************************
 -- a) Functional dependencies --
 
 1.studentIdnr → studentName, login
@@ -16,13 +31,72 @@ D(studentIdnr, studentName, login, branchName, programName, programAbbreviation,
 8.courseCode, position → studentIdnr (in waiting list)
 9.studentIdnr, branchName → programName
 10.programName, branchName → {}
-11.studentIdnr → programName
 12.courseCode → capacity (for limited courses)
 13.departmentName → departmentAbbreviation
 14.studentIdnr, courseCode → position (in waiting list)
 15.courseCode, studentIdnr → grade(in taken courses)
 
 -- b) BCNF schema --
+***************************************************************************************
+Schema of the FDs above using BCNF normalization by hand:
+
+R(studentIdnr, studentName, login, branchName, programName, programAbbreviation, 
+ courseCode, courseName, credits, departmentName, departmentAbbreviation, capacity, 
+ classification, grade, position)
+
+Decompose R using studentIdnr → studentName, login, programName
+X = {studentIdnr}, X+ = {studentIdnr}+ = {studentIdnr, studentName, login, programName} 
+R1(X+)=			R1(studentIdnr, studentName, login, programName) 
+R2(X∪(S−X+))= 		R2(studentIdnr, branchName, programAbbreviation, courseCode, courseName, credits, 
+		   departmentName, departmentAbbreviation, capacity, 
+ 	           classification, grade, position )
+
+Decompose R2 using courseCode → courseName, credits, departmentName, capacity
+X = {courseCode}, X+ = {courseCode}+ = {courseCode, courseName, credits, departmentName, capacity}
+R3(X+)=			R3(courseCode, courseName, credits, departmentName, capacity)
+R4(X∪(S−X+))=		R4(studentIdnr, branchName, programAbbreviation, courseCode, 
+			    departmentAbbreviation,classification, grade, position)
+
+Decompose R4 using programName → programAbbreviation, departmentName, departmentAbbreviation
+X = {programName}, X+ = {programName}+ = {programName, programAbbreviation, departmentName}
+R5(X+)=			R5(programName, programAbbreviation, departmentName)
+R6(X∪(S−X+))=		R6(studentIdnr, branchName, programName, courseCode,classification, 
+			     grade, position)
+
+Decompose R6 using (studentIdnr, courseCode) → grade
+X = {(studentIdnr, courseCode)}, X+ = {(studentIdnr, courseCode)}+ = {studentIdnr, courseCode, grade}
+R7(X+)=			R7(studentIdnr, courseCode, grade)
+R8(X∪(S−X+))=		R8(studentIdnr, programName, branchName, courseCode,classification, position)
+
+Decompose R8 using (studentIdnr, courseCode) → position
+R9(X+)=			R9(studentIdnr, courseCode, position)
+R10(X∪(S−X+))=		R10(studentIdnr, programName, branchName, courseCode,classification)
+
+further normalized using 4NF normalization
+MVD: courseCode → classification
+X = {courseCode}, X+ = {courseCode}+ = {courseCode, classification}
+R11(X+)= 		R11(courseCode, classification) 
+
+Final Result:
+R0(studentIdnr, studentName, login, programName)
+R1(courseCode, courseName, credits, departmentName, capacity)
+R2(programName, programAbbreviation, departmentName)
+R3(studentIdnr, courseCode, grade)
+R4(studentIdnr, courseCode, position)
+R5(courseCode, classification)
+
+R0(studentIdnr, studentName, login, programName)
+R1(courseCode, courseName, credits, departmentName, capacity)
+R2(programName, programAbbreviation)
+R3(departmentName, departmentAbbreviation)
+R4(studentIdnr, courseCode, grade)
+R5(studentIdnr, courseCode, position)
+R6(courseCode, classification)
+
+
+
+***************************************************************************************
+
 
 BasicStudentInfo(_studentIdnr_, name, login)
 

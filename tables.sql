@@ -32,10 +32,8 @@ CREATE TABLE StudentBranches (
     branch TEXT NOT NULL,
     program TEXT NOT NULL,
     FOREIGN KEY (student) REFERENCES Students(idnr),
-    FOREIGN KEY (branch, program) REFERENCES Branches(name, program),
-    CONSTRAINT same_program CHECK (
-        program = (SELECT program FROM Students WHERE idnr = student)
-    )
+    FOREIGN KEY (branch, program) REFERENCES Branches(name, program) CHECK 
+	(program = (SELECT program FROM Students WHERE idnr = student))
 );
 --**********************************************************************************************************************
 CREATE TABLE Classifications (
@@ -97,6 +95,7 @@ CREATE TABLE WaitingList (
 	course CHAR(6),
 	position INT NOT NULL CHECK (position > 0),
 	PRIMARY KEY (student, course),
+	UNIQUE (course, position),
 	FOREIGN KEY (student) REFERENCES Students(idnr) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (course) REFERENCES LimitedCourses(code) ON DELETE CASCADE ON UPDATE CASCADE
 );
