@@ -1,0 +1,68 @@
+-- This file will have your ER-translated schema.
+-- It should be very similar (but not identical) to the schema from part 1. 
+-- Use the format in the example below (with keys marked by key
+-- since underlining is not supported in plain text):
+
+-- IMPORTANT: This file should be a translation of your diagram
+-- without any additions (no additional constraints etc)!
+
+
+***************************************************************
+Programs(-name-, abbreviation)
+***************************************************************
+Departments(-name-, abbreviation)
+***************************************************************
+Students(-idnr-, name, login, program)
+    program → Programs.name
+***************************************************************
+LimitedCourses(-code-, capacity)
+  code → Courses.code
+***************************************************************
+Courses(-code-, name, credits, department)
+	department → Departments.name
+***************************************************************
+Classified(-course-, -classification-)
+    course → courses.code
+    classification → Classifications.name
+***************************************************************
+Classifications(-name-)
+***************************************************************
+MandatoryProgram(-course-, -program-)
+	program → Programs.name
+    course → Courses.code
+***************************************************************
+MandatoryBranch(-course-, -branch-, -program-)
+    (branch, program) → Branches.(name, program)
+    course → Courses.code
+***************************************************************
+RecommendedBranch(-course-, -branch-, -program-)
+    course → Courses.code
+    (branch, program) → Branches.(name, program)
+***************************************************************
+Registered(-student-, -course-)
+    student → Students.idnr
+    course → Courses.code
+***************************************************************
+Taken(-student-, -course-, grade)
+    student → Students.idnr
+    course → Courses.code
+***************************************************************
+WaitingList(-student-, -course-, position)
+    student → Students.idnr
+    course → LimitedCourses.code
+***************************************************************
+Branch(-name-, -program-)
+	program → Programs.name
+***************************************************************
+StudentBranches(-student-, branch, program)
+    student → Students.idnr
+    (branch, program) → Branches.(name, program)
+***************************************************************
+PartOf(-program-, -department-)
+    program → Programs.name
+    department → Departments.name
+***************************************************************
+Prerequisites(-course-, -prerequisite-)
+    course → Courses.code
+    prerequisite → Courses.code
+***************************************************************
