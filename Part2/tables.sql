@@ -1,10 +1,21 @@
 -- This file will contain all your tables
+CREATE TABLE Programs (
+    name TEXT PRIMARY KEY,
+    abbreviation TEXT UNIQUE
+);
+--**********************************************************************************************************************
+CREATE TABLE Departments (
+    name TEXT PRIMARY KEY,
+    abbreviation TEXT UNIQUE
+);
+--**********************************************************************************************************************
 CREATE TABLE Students (
     idnr TEXT PRIMARY KEY CHECK (idnr LIKE '__________'),
     name TEXT NOT NULL,
     login TEXT NOT NULL UNIQUE,
     program TEXT NOT NULL,
-    FOREIGN KEY (program) REFERENCES Programs(name)
+    FOREIGN KEY (program) REFERENCES Programs(name),
+	UNIQUE(idnr, program)
 );
 --**********************************************************************************************************************
 CREATE TABLE Branches (
@@ -31,11 +42,8 @@ CREATE TABLE StudentBranches (
     student TEXT PRIMARY KEY,
     branch TEXT NOT NULL,
     program TEXT NOT NULL,
-    FOREIGN KEY (student) REFERENCES Students(idnr),
-    FOREIGN KEY (branch, program) REFERENCES Branches(name, program), 
-	CONSTRAINT same_program CHECK (
-        program = (SELECT program FROM Students WHERE idnr = student)
-    )
+    FOREIGN KEY (student, program) REFERENCES Students(idnr, program) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (branch, program) REFERENCES Branches(name, program)ON DELETE CASCADE ON UPDATE CASCADE 
 );
 --**********************************************************************************************************************
 CREATE TABLE Classifications (
@@ -101,19 +109,6 @@ CREATE TABLE WaitingList (
 	FOREIGN KEY (student) REFERENCES Students(idnr) ON DELETE CASCADE ON UPDATE CASCADE,
 	FOREIGN KEY (course) REFERENCES LimitedCourses(code) ON DELETE CASCADE ON UPDATE CASCADE
 );
---**********************************************************************************************************************
-CREATE TABLE Programs (
-    name TEXT PRIMARY KEY,
-    abbreviation TEXT UNIQUE,
-    PRIMARY KEY (name)
-);
---**********************************************************************************************************************
-CREATE TABLE Departments (
-    name TEXT PRIMARY KEY,
-    abbreviation TEXT UNIQUE, 
-    PRIMARY KEY (name)
-);
-
 --**********************************************************************************************************************
 CREATE TABLE PartOf (
     program TEXT,

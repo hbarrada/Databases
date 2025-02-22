@@ -6,6 +6,12 @@ INSERT INTO Programs VALUES ('Prog2', 'P2');
 INSERT INTO PartOf VALUES ('Prog1', 'Dep1');
 INSERT INTO PartOf VALUES ('Prog2', 'Dep1');
 
+INSERT INTO Courses VALUES ('CCC111','C1',22.5,'Dep1');
+INSERT INTO Courses VALUES ('CCC222','C2',20,'Dep1');
+INSERT INTO Courses VALUES ('CCC333','C3',30,'Dep1');
+INSERT INTO Courses VALUES ('CCC444','C4',60,'Dep1');
+INSERT INTO Courses VALUES ('CCC555','C5',50,'Dep1');
+
 INSERT INTO Prerequisites VALUES ('CCC222', 'CCC111');
 INSERT INTO Prerequisites VALUES ('CCC333', 'CCC222');
 
@@ -19,12 +25,6 @@ INSERT INTO Students VALUES ('6666666666','Nx','ls6','Prog2');
 INSERT INTO Branches VALUES ('B1','Prog1');
 INSERT INTO Branches VALUES ('B2','Prog1');
 INSERT INTO Branches VALUES ('B1','Prog2');
-
-INSERT INTO Courses VALUES ('CCC111','C1',22.5,'Dep1');
-INSERT INTO Courses VALUES ('CCC222','C2',20,'Dep1');
-INSERT INTO Courses VALUES ('CCC333','C3',30,'Dep1');
-INSERT INTO Courses VALUES ('CCC444','C4',60,'Dep1');
-INSERT INTO Courses VALUES ('CCC555','C5',50,'Dep1');
 
 INSERT INTO LimitedCourses VALUES ('CCC222',1);
 INSERT INTO LimitedCourses VALUES ('CCC333',2);
