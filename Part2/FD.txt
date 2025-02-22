@@ -1,0 +1,72 @@
+
+Domain:
+D(studentIdnr, studentName, login, branchName, programName, programAbbreviation, 
+ courseCode, courseName, credits, departmentName, departmentAbbreviation, capacity, 
+ classification, grade, position)
+
+***************************************************************************************
+-- a) Functional dependencies --
+
+1. studentIdnr → studentName
+2. studentIdnr → Login
+3. studentIdnr → programName
+4. studentIdnr, programName -> branchName
+5. Login -> StudentIdnr
+6. ProgramName -> ProgramAbbreviation
+7. DepartmentName -> DepartmentAbbreviation
+8. DepartmentAbbreviation -> DepartmentName
+9. CourseCode -> CourseName
+10. CourseCode -> Credits
+11. CourseCode -> DepartmentName
+12. CourseCode -> Capacity
+13. StudentIdnr, CourseCode -> Grade
+14. (courseCode, position) → studentIdnr
+15. (studentIdnr, courseCode) → position(waiting list)
+
+***************************************************************************************
+
+-- b) BCNF schema --
+
+Normalize to BCNF
+
+R0(_programName_, programAbbreviation)
+
+********************************
+
+R1(_studentIdnr_ ,studentName ,login, programName, branchName)
+
+********************************  
+
+R2(_departmentName_, departmentAbbreviation )
+
+******************************** 
+
+R3(_courseCode_, departmentAbbreviation courseName credits capacity)
+  
+********************************
+
+R4(_courseCode_ ,_studentIdnr_ ,position ,grade)
+
+********************************
+
+R5(_studentIdnr_, _courseCode_, classification)
+
+********************************
+--c) NF additions --
+
+MVD identified: courseCode ->> classification
+
+R6(courseCode, classification)
+
+Relations Removed:
+R5(studentIdnr, courseCode, classification) (Removed classification from this table)
+Relations Added:
+R6(courseCode, classification)
+********************************
+Final 4NF-Compliant Schema:
+R0(programName, programAbbreviation)
+R1(studentIdnr, studentName, login, programName, branchName)
+R2(departmentName, departmentAbbreviation)
+R3(courseCode, departmentAbbreviation, courseName, credits, capacity)
+R4(courseCode, studentIdnr, position, grade)
+R6(courseCode, classification) (New table for MVD)

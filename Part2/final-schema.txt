@@ -9,7 +9,6 @@
 
 ***************************************************************
 Programs(-name-, abbreviation)
-    UNIQUE(abbreviation)
 ***************************************************************
 Departments(-name-, abbreviation)
     UNIQUE(abbreviation)

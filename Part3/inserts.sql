@@ -1,0 +1,2 @@
+-- This should be a slightly modified version of inserts.sql
+-- from the previous part (see instructions in the canvas page of the assignment) 
