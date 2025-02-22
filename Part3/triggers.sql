@@ -1,6 +1,7 @@
 -- Registration handler remains the same
 CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
 BEGIN
+
     -- Check if the student exist
     IF NOT EXISTS (SELECT 1 FROM Students WHERE idnr = NEW.student) THEN
         RAISE EXCEPTION 'Student does not exist';
