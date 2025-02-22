@@ -62,7 +62,8 @@ CREATE TABLE MandatoryProgram (
 	course CHAR(6),
 	program TEXT,
 	PRIMARY KEY (course, program),
-	FOREIGN KEY (course) REFERENCES Courses(code) ON DELETE CASCADE ON UPDATE CASCADE
+	FOREIGN KEY (course) REFERENCES Courses(code) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (program) REFERENCES Programs(name) ON DELETE CASCADE ON UPDATE 
 );
 --**********************************************************************************************************************
 CREATE TABLE MandatoryBranch (
