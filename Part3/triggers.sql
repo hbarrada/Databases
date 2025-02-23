@@ -1,13 +1,40 @@
--- Registration handler remains the same
-CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
+-- Function to handle administrator direct registrations
+CREATE OR REPLACE FUNCTION handle_admin_registration() RETURNS TRIGGER AS $$
 BEGIN
-
-    -- Check if the student exist
+    -- Check if student exists (basic validation)
     IF NOT EXISTS (SELECT 1 FROM Students WHERE idnr = NEW.student) THEN
         RAISE EXCEPTION 'Student does not exist';
     END IF;
 
-    -- Check if the course exist
+    -- Check if course exists (basic validation)
+    IF NOT EXISTS (SELECT 1 FROM Courses WHERE code = NEW.course) THEN
+        RAISE EXCEPTION 'Course does not exist';
+    END IF;
+
+    -- Check if already registered (avoid duplicates)
+    IF EXISTS (SELECT 1 FROM Registered WHERE student = NEW.student AND course = NEW.course) THEN
+        RAISE EXCEPTION 'Student is already registered for this course';
+    END IF;
+
+    -- If student is in waiting list, remove them
+    DELETE FROM WaitingList 
+    WHERE student = NEW.student 
+    AND course = NEW.course;
+
+    -- Let the registration proceed (administrator override)
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to handle student registrations through the view
+CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if the student exists
+    IF NOT EXISTS (SELECT 1 FROM Students WHERE idnr = NEW.student) THEN
+        RAISE EXCEPTION 'Student does not exist';
+    END IF;
+
+    -- Check if the course exists
     IF NOT EXISTS (SELECT 1 FROM Courses WHERE code = NEW.course) THEN
         RAISE EXCEPTION 'Course does not exist';
     END IF;
@@ -60,7 +87,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Modified unregistration handler with prerequisite checking
+-- Function to handle student unregistrations
 CREATE OR REPLACE FUNCTION handle_unregistration() RETURNS TRIGGER AS $$
 DECLARE
     first_waiting_student TEXT;
@@ -139,12 +166,21 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create the triggers
+-- Trigger for administrator direct registrations
+DROP TRIGGER IF EXISTS admin_registration_trigger ON Registered;
+CREATE TRIGGER admin_registration_trigger
+    BEFORE INSERT ON Registered
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_admin_registration();
+
+-- Trigger for student registrations through view
 DROP TRIGGER IF EXISTS registration_trigger ON Registrations;
 CREATE TRIGGER registration_trigger
     INSTEAD OF INSERT ON Registrations
     FOR EACH ROW
     EXECUTE FUNCTION handle_registration();
 
+-- Trigger for student unregistrations through view
 DROP TRIGGER IF EXISTS unregistration_trigger ON Registrations;
 CREATE TRIGGER unregistration_trigger
     INSTEAD OF DELETE ON Registrations
