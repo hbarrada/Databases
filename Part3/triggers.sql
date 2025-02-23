@@ -1,9 +1,9 @@
--- First ensure proper grade constraints
+-- Set up grade constraints for the Taken table
 ALTER TABLE Taken 
     ALTER COLUMN grade SET NOT NULL,
     ADD CONSTRAINT valid_grade CHECK (grade IN ('U', '3', '4', '5'));
 
--- Registration handler
+-- Function that handles all student registration attempts
 CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
 BEGIN
     -- Check if student exists
@@ -21,13 +21,17 @@ BEGIN
         RAISE EXCEPTION 'Student is already registered or waiting for this course';
     END IF;
 
-    -- Check if already Passed
-    IF EXISTS (SELECT 1 FROM Taken WHERE student = NEW.student AND course = NEW.course AND grade IN ('3', '4', '5')) THEN
+    -- Check if student has already passed the course
+    IF EXISTS (SELECT 1 FROM Taken 
+               WHERE student = NEW.student 
+               AND course = NEW.course 
+               AND grade IN ('3', '4', '5')) THEN
         RAISE EXCEPTION 'Student has already passed this course';
     END IF;
 
-    -- Check if course is limited and full
+    -- Handle limited course registration
     IF EXISTS (SELECT 1 FROM LimitedCourses WHERE code = NEW.course) THEN
+        -- Check if course is full
         IF (SELECT COUNT(*) FROM Registered WHERE course = NEW.course) >= 
            (SELECT capacity FROM LimitedCourses WHERE code = NEW.course) THEN
             -- Course is full, add to waiting list without checking prerequisites
@@ -36,11 +40,11 @@ BEGIN
                    (SELECT COALESCE(MAX(position), 0) + 1 
                     FROM WaitingList 
                     WHERE course = NEW.course));
-            RETURN NULL;
+            RETURN NEW;
         END IF;
     END IF;
 
-    -- Check prerequisites with explicit grade check
+    -- Check prerequisites only for direct registration
     IF EXISTS (
         SELECT 1
         FROM Prerequisites p
@@ -59,27 +63,27 @@ BEGIN
     -- All checks passed, register the student
     INSERT INTO Registered (student, course) 
     VALUES (NEW.student, NEW.course);
-    RETURN NULL;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Unregistration handler with proper capacity check
+-- Function that handles all unregistration attempts
 CREATE OR REPLACE FUNCTION handle_unregistration() RETURNS TRIGGER AS $$
 DECLARE
     first_waiting_student TEXT;
     course_capacity INT;
     current_registered INT;
+    deleted_position INT;
 BEGIN
-    -- Was the student registered or waiting?
     IF OLD.status = 'registered' THEN
-        -- Student was registered. Delete from Registered table.
+        -- First remove the registration
         DELETE FROM Registered 
         WHERE student = OLD.student 
         AND course = OLD.course;
 
-        -- Handle waiting list only for limited courses
+        -- Only handle waiting list if this is a limited course
         IF EXISTS (SELECT 1 FROM LimitedCourses WHERE code = OLD.course) THEN
-            -- Get course capacity and current registration count
+            -- Get course capacity and current count
             SELECT capacity INTO course_capacity
             FROM LimitedCourses
             WHERE code = OLD.course;
@@ -88,103 +92,92 @@ BEGIN
             FROM Registered
             WHERE course = OLD.course;
 
-            -- Only register new student if we're not still over capacity
+            -- If we're under capacity, try to register someone from the waiting list
             IF current_registered < course_capacity THEN
-                -- Find first waiting student that meets prerequisites
+                -- Get the first person in the waiting list (by position)
                 SELECT W.student INTO first_waiting_student
                 FROM WaitingList W
                 WHERE W.course = OLD.course
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM Prerequisites p
-                    WHERE p.course = OLD.course
-                    AND NOT EXISTS (
-                        SELECT 1
-                        FROM Taken t
-                        WHERE t.student = W.student 
-                        AND t.course = p.prerequisite 
-                        AND t.grade IN ('3', '4', '5')
-                    )
-                )
                 ORDER BY W.position
                 LIMIT 1;
 
-                -- If eligible student found, register them
                 IF first_waiting_student IS NOT NULL THEN
-                    -- Remove from waiting list
+                    -- Store their position for later updates
+                    SELECT position INTO deleted_position
+                    FROM WaitingList
+                    WHERE student = first_waiting_student 
+                    AND course = OLD.course;
+
+                    -- Remove them from waiting list
                     DELETE FROM WaitingList 
                     WHERE student = first_waiting_student 
                     AND course = OLD.course;
-                    
-                    -- Register them
-                    INSERT INTO Registered (student, course) 
+
+                    -- Add them as registered
+                    INSERT INTO Registered (student, course)
                     VALUES (first_waiting_student, OLD.course);
 
-                    -- Update remaining positions
+                    -- Update positions for remaining students in waiting list
                     UPDATE WaitingList
                     SET position = position - 1
                     WHERE course = OLD.course
-                    AND position > (
-                        SELECT position 
-                        FROM WaitingList 
-                        WHERE student = first_waiting_student 
-                        AND course = OLD.course
-                    );
+                    AND position > deleted_position;
                 END IF;
             END IF;
         END IF;
 
     ELSIF OLD.status = 'waiting' THEN
-        -- Student was waiting. Delete from WaitingList table.
+        -- Handle removal from waiting list
+        -- Get position before deleting
+        SELECT position INTO deleted_position
+        FROM WaitingList
+        WHERE student = OLD.student 
+        AND course = OLD.course;
+
+        -- Remove from waiting list
         DELETE FROM WaitingList 
         WHERE student = OLD.student 
         AND course = OLD.course;
 
-        -- Update positions for remaining waiting list students
+        -- Update positions for remaining students
         UPDATE WaitingList
         SET position = position - 1
         WHERE course = OLD.course
-        AND position > (
-            SELECT position 
-            FROM WaitingList 
-            WHERE student = OLD.student 
-            AND course = OLD.course
-        );
+        AND position > deleted_position;
     END IF;
 
-    RETURN NULL;
+    RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
 
--- Simple admin registration handler
+-- Function that handles administrative registration overrides
 CREATE OR REPLACE FUNCTION handle_admin_registration() RETURNS TRIGGER AS $$
 BEGIN
-    -- Check if student exists
+    -- Basic existence checks
     IF NOT EXISTS (SELECT 1 FROM Students WHERE idnr = NEW.student) THEN
         RAISE EXCEPTION 'Student does not exist';
     END IF;
 
-    -- Check if course exists
     IF NOT EXISTS (SELECT 1 FROM Courses WHERE code = NEW.course) THEN
         RAISE EXCEPTION 'Course does not exist';
     END IF;
 
-    -- Check if already registered
+    -- Check for existing registration
     IF EXISTS (SELECT 1 FROM Registered WHERE student = NEW.student AND course = NEW.course) THEN
         RAISE EXCEPTION 'Student is already registered for this course';
     END IF;
 
-    -- If student is in waiting list, remove them
+    -- Remove from waiting list if present (part of admin override)
     DELETE FROM WaitingList 
     WHERE student = NEW.student 
     AND course = NEW.course;
 
-    -- Let the registration proceed (admin override)
+    -- Allow the registration to proceed
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Create all triggers
+-- Set up all the triggers
 DROP TRIGGER IF EXISTS admin_registration_trigger ON Registered;
 CREATE TRIGGER admin_registration_trigger
     BEFORE INSERT ON Registered
