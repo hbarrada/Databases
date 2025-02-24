@@ -39,7 +39,7 @@ BEGIN
         END IF;
     END IF;
 
-    -- Check prerequisites only for direct registration
+    -- Check prerequisites before registering the student
     IF EXISTS (
         SELECT 1
         FROM Prerequisites p
