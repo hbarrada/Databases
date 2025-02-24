@@ -60,7 +60,7 @@ Branch(-name-, -program-)
 StudentBranches(-student-, branch, program)
     student → Students.idnr
     (branch, program) → Branches.(name, program)
-    program = (SELECT program FROM Students WHERE idnr = student)
+    program → Students.program
 ***************************************************************
 PartOf(-program-, -department-)
     program → Programs.name

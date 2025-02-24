@@ -1,4 +1,3 @@
-
 Domain:
 D(studentIdnr, studentName, login, branchName, programName, programAbbreviation, 
  courseCode, courseName, credits, departmentName, departmentAbbreviation, capacity, 
@@ -33,40 +32,39 @@ R0(_programName_, programAbbreviation)
 
 ********************************
 
-R1(_studentIdnr_ ,studentName ,login, programName, branchName)
+R1(_studentIdnr_, studentName, login, programName, branchName)
 
 ********************************  
 
-R2(_departmentName_, departmentAbbreviation )
+R2(_departmentName_, departmentAbbreviation)
 
 ******************************** 
 
-R3(_courseCode_, departmentAbbreviation courseName credits capacity)
+R3(_courseCode_, departmentAbbreviation, courseName, credits, capacity)
   
 ********************************
 
-R4(_courseCode_ ,_studentIdnr_ ,position ,grade)
+R4(_courseCode_, _studentIdnr_, position, grade)
 
 ********************************
 
-R5(_studentIdnr_, _courseCode_, classification)
+R5(_courseCode_, _studentIdnr_, classification)
 
 ********************************
 --c) NF additions --
 
 MVD identified: courseCode ->> classification
 
-R6(courseCode, classification)
-
-Relations Removed:
-R5(studentIdnr, courseCode, classification) (Removed classification from this table)
+Relations Modified:
+R5(_courseCode_, _studentIdnr_, classification)
 Relations Added:
-R6(courseCode, classification)
+R6(_courseCode_, _classification_)
+
 ********************************
 Final 4NF-Compliant Schema:
-R0(programName, programAbbreviation)
-R1(studentIdnr, studentName, login, programName, branchName)
-R2(departmentName, departmentAbbreviation)
-R3(courseCode, departmentAbbreviation, courseName, credits, capacity)
-R4(courseCode, studentIdnr, position, grade)
-R6(courseCode, classification) (New table for MVD)
+R0(_programName_, programAbbreviation)
+R1(_studentIdnr_, studentName, login, programName, branchName)
+R2(_departmentName_, departmentAbbreviation)
+R3(_courseCode_, departmentAbbreviation, courseName, credits, capacity)
+R4(_courseCode_, _studentIdnr_, position, grade)
+R6(_courseCode_, _classification_) (New table for MVD)

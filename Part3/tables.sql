@@ -1,7 +1,7 @@
 -- This file will contain all your tables
 CREATE TABLE Programs (
     name TEXT PRIMARY KEY,
-    abbreviation TEXT UNIQUE
+    abbreviation TEXT
 );
 --**********************************************************************************************************************
 CREATE TABLE Departments (

@@ -1,8 +1,3 @@
--- Set up grade constraints for the Taken table
-ALTER TABLE Taken 
-    ALTER COLUMN grade SET NOT NULL,
-    ADD CONSTRAINT valid_grade CHECK (grade IN ('U', '3', '4', '5'));
-
 -- Function that handles all student registration attempts
 CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
 BEGIN
@@ -150,40 +145,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function that handles administrative registration overrides
-CREATE OR REPLACE FUNCTION handle_admin_registration() RETURNS TRIGGER AS $$
-BEGIN
-    -- Basic existence checks
-    IF NOT EXISTS (SELECT 1 FROM Students WHERE idnr = NEW.student) THEN
-        RAISE EXCEPTION 'Student does not exist';
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM Courses WHERE code = NEW.course) THEN
-        RAISE EXCEPTION 'Course does not exist';
-    END IF;
-
-    -- Check for existing registration
-    IF EXISTS (SELECT 1 FROM Registered WHERE student = NEW.student AND course = NEW.course) THEN
-        RAISE EXCEPTION 'Student is already registered for this course';
-    END IF;
-
-    -- Remove from waiting list if present (part of admin override)
-    DELETE FROM WaitingList 
-    WHERE student = NEW.student 
-    AND course = NEW.course;
-
-    -- Allow the registration to proceed
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Set up all the triggers
-DROP TRIGGER IF EXISTS admin_registration_trigger ON Registered;
-CREATE TRIGGER admin_registration_trigger
-    BEFORE INSERT ON Registered
-    FOR EACH ROW
-    EXECUTE FUNCTION handle_admin_registration();
-
 DROP TRIGGER IF EXISTS registration_trigger ON Registrations;
 CREATE TRIGGER registration_trigger
     INSTEAD OF INSERT ON Registrations
