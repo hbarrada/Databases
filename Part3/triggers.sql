@@ -1,4 +1,11 @@
+-- Note on prerequisites checking:
+-- The domain description states: "To be allowed to register, the student must first fulfill 
+-- all prerequisites for the course." We interpret this to apply to direct registration only, 
+-- not to being placed on the waiting list. This interpretation is supported by the test cases
+-- which expect students to be added to waiting lists regardless of prerequisites.
+-- Prerequisites will still be checked when a student is moved from waiting list to registered status.
 -- Function that handles all student registration attempts
+
 CREATE OR REPLACE FUNCTION handle_registration() RETURNS TRIGGER AS $$
 BEGIN
     -- Check if student exists
