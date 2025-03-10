@@ -1,0 +1,9 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "Part4/java/postgresql-42.7.4.jar"
+    ],
+    "files.watcherExclude": {
+        "**/target": true
+    }
+}
